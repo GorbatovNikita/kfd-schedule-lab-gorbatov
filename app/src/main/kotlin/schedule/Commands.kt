@@ -13,22 +13,77 @@ object StudentCommandHandlers : CommandHandlers {
 }
 
 fun runPeriod(command: Command.Period): Int {
-    // TODO: parse every line of command.file, filter by command.from..command.to,
-    // print the selected sessions and Total, return 0 or 1.
-    println("Not implemented: period")
-    return 2
+    var rejected = false
+    var selected = 0
+    forEachScheduleLine(command.file) { number, line ->
+        when (val result = parseSessionLine(number, line)) {
+            is ParseResult.Accepted -> {
+                val session = result.session
+                if (session.date >= command.from && session.date <= command.to) {
+                    val location = when (session) {
+                        is Lecture -> session.location
+                        is Practice -> session.location
+                        is Exam -> session.location
+                        is Cancelled -> "-"
+                    }
+                    println("${session.date} | ${session.typeLabel()} | ${session.topic} | $location")
+                    selected++
+                }
+            }
+            is ParseResult.Rejected -> rejected = true
+        }
+    }
+    println("Total: $selected")
+    return if (rejected) 1 else 0
 }
 
 fun runType(command: Command.ByType): Int {
-    // TODO: parse every line of command.file, filter by command.type,
-    // print the selected sessions with teachers and Total, return 0 or 1.
-    println("Not implemented: type")
-    return 2
+    var rejected = false
+    var selected = 0
+    forEachScheduleLine(command.file) { number, line ->
+        when (val result = parseSessionLine(number, line)) {
+            is ParseResult.Accepted -> {
+                val session = result.session
+                if (session.typeLabel() == command.type.name) {
+                    val location: String
+                    val teachers: String
+                    when (session) {
+                        is Lecture -> { location = session.location; teachers = session.teachers.joinToString(", ") }
+                        is Practice -> { location = session.location; teachers = session.teachers.joinToString(", ") }
+                        is Exam -> { location = session.location; teachers = session.teachers.joinToString(", ") }
+                        is Cancelled -> { location = "-"; teachers = "-" }
+                    }
+                    println("${session.date} | ${session.typeLabel()} | ${session.topic} | $location | $teachers")
+                    selected++
+                }
+            }
+            is ParseResult.Rejected -> rejected = true
+        }
+    }
+    println("Total: $selected")
+    return if (rejected) 1 else 0
 }
 
 fun runErrors(command: Command.Errors): Int {
-    // TODO: parse every line of command.file, print formatted rejections
-    // and Rejected: K of M, return 0 or 1.
-    println("Not implemented: errors")
-    return 2
+    var rejected = 0L
+    var total = 0L
+    forEachScheduleLine(command.file) { number, line ->
+        total++
+        when (val result = parseSessionLine(number, line)) {
+            is ParseResult.Accepted -> Unit
+            is ParseResult.Rejected -> {
+                rejected++
+                println(formatParseError(result))
+            }
+        }
+    }
+    println("Rejected: $rejected of $total")
+    return if (rejected == 0L) 0 else 1
+}
+
+private fun Session.typeLabel(): String = when (this) {
+    is Lecture -> "LECTURE"
+    is Practice -> "PRACTICE"
+    is Exam -> "EXAM"
+    is Cancelled -> "CANCELLED"
 }
