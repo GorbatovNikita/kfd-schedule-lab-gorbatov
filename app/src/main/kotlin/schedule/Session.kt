@@ -9,13 +9,19 @@ sealed interface Session {
     val topic: String
 }
 
+/** Shared contract for sessions that take place at a location and have teachers. */
+sealed interface ActiveSession : Session {
+    val location: String
+    val teachers: List<String>
+}
+
 class Lecture(
     override val date: LocalDate,
     override val topic: String,
-    val location: String,
+    override val location: String,
     teachers: List<String>,
-) : Session {
-    val teachers: List<String> = immutableTeachers(teachers)
+) : ActiveSession {
+    override val teachers: List<String> = immutableTeachers(teachers)
 
     init {
         validateCommon(date, topic)
@@ -26,10 +32,10 @@ class Lecture(
 class Practice(
     override val date: LocalDate,
     override val topic: String,
-    val location: String,
+    override val location: String,
     teachers: List<String>,
-) : Session {
-    val teachers: List<String> = immutableTeachers(teachers)
+) : ActiveSession {
+    override val teachers: List<String> = immutableTeachers(teachers)
 
     init {
         validateCommon(date, topic)
@@ -40,10 +46,10 @@ class Practice(
 class Exam(
     override val date: LocalDate,
     override val topic: String,
-    val location: String,
+    override val location: String,
     teachers: List<String>,
-) : Session {
-    val teachers: List<String> = immutableTeachers(teachers)
+) : ActiveSession {
+    override val teachers: List<String> = immutableTeachers(teachers)
 
     init {
         validateCommon(date, topic)

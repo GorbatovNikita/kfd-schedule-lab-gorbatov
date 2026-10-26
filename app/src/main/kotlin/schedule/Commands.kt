@@ -21,9 +21,7 @@ fun runPeriod(command: Command.Period): Int {
                 val session = result.session
                 if (session.date >= command.from && session.date <= command.to) {
                     val location = when (session) {
-                        is Lecture -> session.location
-                        is Practice -> session.location
-                        is Exam -> session.location
+                        is ActiveSession -> session.location
                         is Cancelled -> "-"
                     }
                     println("${session.date} | ${session.typeLabel()} | ${session.topic} | $location")
@@ -48,10 +46,14 @@ fun runType(command: Command.ByType): Int {
                     val location: String
                     val teachers: String
                     when (session) {
-                        is Lecture -> { location = session.location; teachers = session.teachers.joinToString(", ") }
-                        is Practice -> { location = session.location; teachers = session.teachers.joinToString(", ") }
-                        is Exam -> { location = session.location; teachers = session.teachers.joinToString(", ") }
-                        is Cancelled -> { location = "-"; teachers = "-" }
+                        is ActiveSession -> {
+                            location = session.location
+                            teachers = session.teachers.joinToString(", ")
+                        }
+                        is Cancelled -> {
+                            location = "-"
+                            teachers = "-"
+                        }
                     }
                     println("${session.date} | ${session.typeLabel()} | ${session.topic} | $location | $teachers")
                     selected++
